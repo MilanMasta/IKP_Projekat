@@ -2,9 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <list>
 #include <iostream> 
-#include <thread>   
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdlib.h>
@@ -20,6 +18,17 @@
 
 // TCP server that use blocking sockets
 
+DWORD WINAPI KonekcijaKorisnika(LPVOID lpParam)
+{
+    for (int i = 0;i < 1000;i++)
+    {
+        printf("1");
+    }
+    return 0;
+}
+
+#pragma region Strukture
+
 typedef struct poruka_st {
     char sadrzajPoruke[BUFFER_SIZE];
     char posiljaoca[20];
@@ -32,6 +41,9 @@ typedef struct klijent_st {
     PORUKA* poruke;
 } KLIJENT;
 
+#pragma endregion
+
+#pragma region UpravljanjeListom
 void init_list(KLIJENT** head){
     *head = NULL;
 }
@@ -65,18 +77,20 @@ void dodaj_poruku_u_inbox(char ime[],char NoviSadrzajPoruka[],char posiljaoc[]) 
         printf("Not enough RAM!\n");
         exit(21);
     }
-
     strcpy(novaPoruka->sadrzajPoruke, NoviSadrzajPoruka);
 }
+#pragma endregion
 
+KLIJENT* head;
 int brojKorisnika = 0;
 
 int main()
 {
-    KLIJENT* head;
     init_list(&head);
+#pragma region Konekcija
+    //inicijalizacija liste
 
-    
+
     // Socket used for listening for new clients 
     SOCKET listenSocket = INVALID_SOCKET;
 
@@ -145,8 +159,7 @@ int main()
     
     printf("Server socket is set to listening mode. Waiting for new connection requests.\n");
 
-    do
-    {
+    while (true) {
         // Struct for information about connected client
         sockaddr_in clientAddr;
 
@@ -166,49 +179,63 @@ int main()
 
         printf("\nNew client request accepted. Client address: %s : %d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-        do
+        char ime[20];
+        // Receive data until the client shuts down the connection
+        iResult = recv(acceptedSocket, ime, 20, 0);
+
+        if (iResult > 0)	// Check if message is successfully received
         {
-            // Receive data until the client shuts down the connection
-            iResult = recv(acceptedSocket, dataBuffer, BUFFER_SIZE, 0);
+            ime[iResult] = '\0';
 
-            if (iResult > 0)	// Check if message is successfully received
-            {
-                dataBuffer[iResult] = '\0';
-                   
-                if (brojKorisnika == 0) {
-                    KLIJENT* novi =  kreiraj_novog_klijenta(dataBuffer);
-                    add_to_list(novi, &head);
-                        brojKorisnika++;
+            if (brojKorisnika == 0) {
+                KLIJENT* novi = kreiraj_novog_klijenta(ime);
+                add_to_list(novi, &head);
+                brojKorisnika++;
+            }
+            else {
+                //provjera da li INBOX vec postoji treba da se uradi
+                KLIJENT* novi = kreiraj_novog_klijenta(ime);
+                add_to_list(novi, &head);
+                brojKorisnika++;
+            }
+        }
+    }
+#pragma endregion
+
+            
+#pragma region NeblokirajucePrimanje
+            unsigned long mode = 1; //non-blocking mode
+            int iResult2 = ioctlsocket(acceptedSocket, FIONBIO, &mode);
+            char dataBuffer2[BUFFER_SIZE];
+            if (iResult2 != NO_ERROR)
+                printf("ioctlsocket failed with error: %ld\n", iResult2);
+            while (true) {
+
+                // Poziv operacije nad soketom
+                iResult2 = recv(acceptedSocket, dataBuffer2, BUFFER_SIZE, 0);
+                //Provera da li se operacije uspesno izvrsila
+                if (iResult2 != SOCKET_ERROR) {
+                    dataBuffer2[iResult2] = '\0';
+                    printf("Client sent neblokirajuci: %s.\n", dataBuffer2);
                 }
-                else {
-                    //provjera da li INBOX vec postoji treba da se uradi
-                    KLIJENT* novi = kreiraj_novog_klijenta(dataBuffer);
-                    add_to_list(novi, &head);
-                    brojKorisnika++;
+                else
+                {
+                    if (WSAGetLastError() == WSAEWOULDBLOCK) {
+                        // U pitanju je blokirajuca operacija koja zbog rezima
+                        // soketa nece biti izvrsena
+                    }
+                    else {
+                        // Desila se neka druga greska prilikom poziva operacije
+                        printf("Greska");
+                    }
                 }
-                printf("Client sent: %s.\n", dataBuffer);
-
             }
-            else if (iResult == 0)	// Check if shutdown command is received
-            {
-                // Connection was closed successfully
-                printf("Connection with client closed.\n");
-                closesocket(acceptedSocket);
-            }
-            else	// There was an error during recv
-            {
+#pragma endregion
 
-                printf("recv failed with error: %d\n", WSAGetLastError());
-                closesocket(acceptedSocket);
-            }
+#pragma region Zatvaranje
 
-        } while (iResult > 0);
 
-        // Here is where server shutdown loguc could be placed
-
-    } while (true);
-
-    // Shutdown the connection since we're done
+            // Shutdown the connection since we're done
     iResult = shutdown(acceptedSocket, SD_BOTH);
 
     // Check if connection is succesfully shut down.
@@ -226,6 +253,6 @@ int main()
 
     // Deinitialize WSA library
     WSACleanup();
-
+#pragma endregion
     return 0;
 }
