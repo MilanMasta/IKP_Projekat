@@ -26,10 +26,8 @@ int main()
     // Variable used to store function return value
     int iResult;
 
-    // Buffer we will use to store message
     char dataBuffer[BUFFER_SIZE];
     char ime[20];
-    // WSADATA data structure that is to receive details of the Windows Sockets implementation
     WSADATA wsaData;
 
     // Initialize windows sockets library for this process
@@ -53,11 +51,10 @@ int main()
 
     // Create and initialize address structure
     sockaddr_in serverAddress;
+
     serverAddress.sin_family = AF_INET;								// IPv4 protocol
     serverAddress.sin_addr.s_addr = inet_addr(SERVER_IP_ADDRESS);	// ip address of server
     serverAddress.sin_port = htons(SERVER_PORT);					// server port
-
-    // Connect to server specified in serverAddress and socket connectSocket
     if (connect(connectSocket, (SOCKADDR*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR)
     {
         printf("Unable to connect to server.\n");
@@ -79,10 +76,39 @@ int main()
         char izbor1[sizeof(int)];
         gets_s(izbor1, sizeof(int)); 
         int izbor = atoi(izbor1);
-
+        char zahtjev[] = "Zelim poruke\n";
         switch (izbor) {
         case 1:
-            // statements
+            printf("\t\t\t\t\t\tOVO JE VAS INBOX: \n");
+            iResult = send(connectSocket, zahtjev, (int)strlen(zahtjev), 0); // zahtjev za pregled porukas
+            while (!_kbhit()) {
+                
+
+                unsigned long mode = 1; //non-blocking mode
+                iResult = ioctlsocket(connectSocket, FIONBIO, &mode);
+                if (iResult != NO_ERROR)
+                    printf("ioctlsocket failed with error: %ld\n", iResult);
+
+
+                iResult = recv(connectSocket, dataBuffer, BUFFER_SIZE, 0);
+                //Provera da li se operacije uspesno izvrsila
+                if (iResult != SOCKET_ERROR) {
+                    dataBuffer[iResult] = '\0';
+                    printf(dataBuffer);
+                    Sleep(1500);
+                }
+                else
+                {
+                    if (WSAGetLastError() == WSAEWOULDBLOCK) {
+                        // U pitanju je blokirajuca operacija koja zbog rezima
+                        // soketa nece biti izvrsena
+                    }
+                    else {
+                        // Desila se neka druga greska prilikom poziva operacije
+                    }
+                }
+            }
+            iResult = send(connectSocket, "kraj", 4, 0);
             break;
 
         case 2:
@@ -94,32 +120,21 @@ int main()
                 strcat(dataBuffer, "\n");
                 strcat(dataBuffer, primalac);
                 a = atoi(dataBuffer);
-                // Send message to server using connected socket
-                iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer)+24, 0);
+                if (a != 1) {
+                    // Send message to server using connected socket
+                    iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer) + 24, 0);
 
-                // Check result of send function
-                if (iResult == SOCKET_ERROR)
-                {
-                    printf("send failed with error: %d\n", WSAGetLastError());
-                    closesocket(connectSocket);
-                    WSACleanup();
-                    return 1;
-                }
-
-                printf("Message successfully sent.\n");
-
-
-                // Check if connection is succesfully shut down.
-                if (iResult == SOCKET_ERROR)
-                {
-                    printf("Shutdown failed with error: %d\n", WSAGetLastError());
-                    // Shutdown the connection since we're done
-                    iResult = shutdown(connectSocket, SD_BOTH);
-                    closesocket(connectSocket);
-                    WSACleanup();
-                    return 1;
+                    // Check result of send function
+                    if (iResult == SOCKET_ERROR)
+                    {
+                        printf("send failed with error: %d\n", WSAGetLastError());
+                        closesocket(connectSocket);
+                        WSACleanup();
+                    }
+                    printf("Poruka uspjesno poslata\n");
                 }
             }
+            break;
         case 0:
             petlja = 0;
         default:
