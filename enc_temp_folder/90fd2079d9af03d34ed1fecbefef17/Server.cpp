@@ -45,6 +45,7 @@ KLIJENT* head = NULL;
 DWORD WINAPI inboxKorisnika(LPVOID lpParam) {
 
  KLIJENT* klijent = (KLIJENT*)lpParam;
+ head;
  unsigned int klijentSocket = klijent->acptSocket;
  char* ime = klijent->ime;
  char dataBuffer[BUFFER_SIZE];
