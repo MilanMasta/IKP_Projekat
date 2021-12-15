@@ -113,14 +113,18 @@ int main()
 
         case 2:
             while (a != 1) {
-                printf("Primalac :");
-                gets_s(primalac, sizeof(char) * 20);
-                printf("Posalji poruku: (1 za povratak u meni) ");
+                strcpy(primalac, "");
+                while (!strcmp(primalac, "")) {
+                    printf("Primalac (1 za povratak u meni):");
+                    gets_s(primalac, sizeof(primalac));
+                }
+                if (strcmp(primalac,"1")) {
+                printf("Posalji poruku:  ");
                 gets_s(dataBuffer, BUFFER_SIZE);
                 strcat(dataBuffer, "\n");
                 strcat(dataBuffer, primalac);
                 a = atoi(dataBuffer);
-                if (a != 1) {
+                
                     // Send message to server using connected socket
                     iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer) + 24, 0);
 
@@ -132,6 +136,9 @@ int main()
                         WSACleanup();
                     }
                     printf("Poruka uspjesno poslata\n");
+                }
+                else {
+                    a = 1;
                 }
             }
             break;
