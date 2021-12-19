@@ -63,29 +63,54 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
              char* poruka = strtok(dataBuffer, "\n");
 
 
-
-             if (!strcmp(primalac,"")) { // TRAZI PORUKE DA VIDI
+             if (!strcmp(primalac,"")) { // TRAZI PORUKE DA VIDI i nalazi se u inboxu
                  int a = 1;
-                 while (a == 1) { // nece da ih gleda vise
+                 
                      KLIJENT** inboxKlijenta = pronadjiKlijentaZaPrijemPoruke(&head, ime);
                      PORUKA** poruka = &(*inboxKlijenta)->poruke;
-                     if (*poruka != NULL) {
+
+                     while (*poruka != NULL) { //posalji sve poruke koje su se nekupile u red do tog momenta
                          char* pos = (*poruka)->posiljaoc;
                          char* sadrzaj = (*poruka)->sadrzajPoruke;
                          strcat(strcat(strcat(pos, " : "), sadrzaj), "\n");
                          iResult = send(klijentSocket, pos, (int)strlen(pos), 0);
                          (*poruka) = (*poruka)->next;
                      }
+
+                 while (a == 1)
+                 { // ako je a != 1 ne zeli poruke vise da gleda
                      unsigned long mode = 1; //non-blocking mode
                      iResult = ioctlsocket(klijentSocket, FIONBIO, &mode);
                      iResult = recv(klijentSocket, dataBuffer1, BUFFER_SIZE, 0);
                      if (iResult != SOCKET_ERROR) {
                          dataBuffer1[iResult] = '\0';
                          if (!strcmp(dataBuffer1, "kraj")) {
-                             mode = 0; //blocking mode
+                             unsigned long mode = 0; //non-blocking mode
                              iResult = ioctlsocket(klijentSocket, FIONBIO, &mode);
                              a = 0;
                          }
+                     }
+                     else
+                     {
+                         if (WSAGetLastError() == WSAEWOULDBLOCK) {
+
+                             while (*poruka != NULL) { //ako ima novih poruka posalji ih
+                                 char* pos = (*poruka)->posiljaoc;
+                                 char* sadrzaj = (*poruka)->sadrzajPoruke;
+                                 strcat(strcat(strcat(pos, " : "), sadrzaj), "\n");
+                                 iResult = send(klijentSocket, pos, (int)strlen(pos), 0);
+                                 (*poruka) = (*poruka)->next;
+                             }
+                         }
+                         else {
+                             printf("Klijent %s se diskonektovao\n", klijent->ime);
+                             closesocket(klijentSocket);
+                             iResult = -1;
+                             iResult = shutdown(klijentSocket, SD_BOTH);
+                             closesocket(klijentSocket);
+                             return 0;
+                         }
+
                      }
                  }
              }
@@ -107,15 +132,6 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                      citajKlijenta(&head);
                  }
              }
-         }
-         else if (iResult == 0)
-         {
-             printf("Klijent %s se diskonektovao\n", klijent->ime);
-             closesocket(klijentSocket);
-             iResult = -1;
-             iResult = shutdown(klijentSocket, SD_BOTH);
-             closesocket(klijentSocket);
-             return 0;
          }
          else
          {
