@@ -12,35 +12,35 @@
 #include "Strukture.h"
 
 
-void dodajPorukuUListu(PORUKA* novi, PORUKA** head) {
-    if (*head == NULL) { // list is empty
-        *head = novi;
+void dodajPorukuUListu(PORUKA** novi, PORUKA** head) {
+     if (*head == NULL) { // list is empty
+        *head = *novi;
         return;
     }
     dodajPorukuUListu(novi, &((*head)->next));
 }
 
 PORUKA* kreirajPoruku(char* NoviSadrzajPoruka, char* posiljaoc) {
-    PORUKA* novaPoruka = (PORUKA*)malloc(sizeof(PORUKA));
+     PORUKA*  novaPoruka = (PORUKA*)malloc(sizeof(PORUKA));
     if (novaPoruka == NULL) {
         printf("Not enough RAM!\n");
         exit(21);
     }
-
     strcpy(novaPoruka->sadrzajPoruke, NoviSadrzajPoruka);
     strcpy(novaPoruka->posiljaoc, posiljaoc);
     novaPoruka->next = NULL;
-
+    
     return novaPoruka;
 }
 
 KLIJENT** pronadjiKlijentaZaPrijemPoruke(KLIJENT** head, char* imeKlijenta) {
-    KLIJENT* ret = NULL;
-    KLIJENT* temp = *head;
+    KLIJENT* temp = (KLIJENT*)malloc(sizeof(KLIJENT));
+    temp = *head;
     while (temp != NULL)
     {
         if (!strcmp(temp->ime, imeKlijenta)) {
-            return &temp;
+            KLIJENT** ret = &temp;
+            return ret;
         }
         temp = temp->next;
     }

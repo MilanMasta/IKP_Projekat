@@ -28,11 +28,11 @@ void citajKlijenta(KLIJENT** head);
 KLIJENT* pronadjiKlijenta(KLIJENT** head, char* imeKlijenta);
 KLIJENT** pronadjiKlijentaZaPrijemPoruke(KLIJENT** head, char* imeKlijenta);
 PORUKA* kreirajPoruku(char* NoviSadrzajPoruka, char* posiljaoc);
-void dodajPorukuUListu(PORUKA* novi, PORUKA** head);
+void dodajPorukuUListu(PORUKA** novi, PORUKA** head);
 KLIJENT* head = NULL;
 int brojKorisnika = 0;
 
-
+//(KLIJENT*)malloc(sizeof(KLIJENT))
 DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
 
  KLIJENT* klijent = (KLIJENT*)lpParam;
@@ -61,10 +61,12 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                          char* pos = (*poruka)->posiljaoc;
                          char* sadrzaj = (*poruka)->sadrzajPoruke;
                          strcat(strcat(strcat(pos, " : "), sadrzaj), "\n");
+                         Sleep(1);
                          iResult = send(klijentSocket, pos, (int)strlen(pos), 0);
+                         PORUKA** temp = poruka;
                          (*poruka) = (*poruka)->next;
+                         //free(*temp);
                      }
-
                  while (a == 1)
                  { // ako je a != 1 ne zeli poruke vise da gleda
                      unsigned long mode = 1; //non-blocking mode
@@ -102,12 +104,14 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                      }
                  }
              }
-             else {
-
-                 KLIJENT** inboxPrimaoca = pronadjiKlijentaZaPrijemPoruke(&head, primalac);
+             else { // sending mode
+                 KLIJENT** inboxPrimaoca = pronadjiKlijentaZaPrijemPoruke(&head, primalac);  // ovjde je greska
                  if (inboxPrimaoca != NULL) { // Postoji klijent
-                     PORUKA* poruka1 = kreirajPoruku(poruka, klijent->ime);
-                     dodajPorukuUListu(poruka1, &((*inboxPrimaoca)->poruke));
+                     KLIJENT* inbox = *inboxPrimaoca;
+                     PORUKA* poruka1 = (PORUKA*)malloc(sizeof(PORUKA));
+                     poruka1 = kreirajPoruku(poruka, klijent->ime);
+
+                     dodajPorukuUListu(&poruka1, &(inbox)->poruke);
                      printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
                  }
                  else { // Ne Postoji klijent
@@ -117,13 +121,12 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                      add_to_list(klijent2, &head);
                      brojKorisnika++;
                      printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
-                     citajKlijenta(&head);
                  }
              }
          }
          else
          {
-             printf("Klijent %s se diskonektovao\n", klijent->ime);
+              printf("Klijent %s se diskonektovao\n", klijent->ime);
              closesocket(klijentSocket);
              iResult = -1;
              iResult = shutdown(klijentSocket, SD_BOTH);
@@ -221,7 +224,7 @@ int main()
                     DWORD KorisnikID;
                     HANDLE hinboxKorisnika;
                     hinboxKorisnika = CreateThread(NULL, 0, &PrikupljanjePoruka, (LPVOID)klijent, 0, &KorisnikID);
-                    citajKlijenta(&head);
+                    //citajKlijenta(&head);
                 }
                 else {
                     KLIJENT* klijent = (head);
@@ -243,7 +246,7 @@ int main()
                         }
                         klijent = klijent->next;
                     }
-                    citajKlijenta(&head);
+                   // citajKlijenta(&head);
                 }
             }
         }

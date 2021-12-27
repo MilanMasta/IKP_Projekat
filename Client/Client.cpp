@@ -95,7 +95,6 @@ int main()
                 if (iResult != SOCKET_ERROR) {
                     dataBuffer[iResult] = '\0';
                     printf(dataBuffer);
-                    Sleep(1500);
                 }
                 else
                 {
