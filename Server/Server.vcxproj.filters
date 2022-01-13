@@ -26,5 +26,8 @@
     <ClInclude Include="Strukture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UpravljanjeListama.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

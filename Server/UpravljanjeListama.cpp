@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "conio.h"
 #include "string.h"
-#include "Strukture.h"
+#include "UpravljanjeListama.h"
 
 
 void dodajPorukuUListu(PORUKA** novi, PORUKA** head) {

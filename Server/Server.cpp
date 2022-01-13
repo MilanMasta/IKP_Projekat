@@ -213,6 +213,7 @@ int main()
                 DWORD KorisnikID;
                 HANDLE hinboxKorisnika;
                 hinboxKorisnika = CreateThread(NULL, 0, &PrikupljanjePoruka, (LPVOID)klijent, 0, &KorisnikID);
+                CloseHandle(hinboxKorisnika);
             }
             else {
                 KLIJENT* ret = pronadjiKlijenta(&head, ime);
@@ -224,6 +225,7 @@ int main()
                     DWORD KorisnikID;
                     HANDLE hinboxKorisnika;
                     hinboxKorisnika = CreateThread(NULL, 0, &PrikupljanjePoruka, (LPVOID)klijent, 0, &KorisnikID);
+                    CloseHandle(hinboxKorisnika);
                     //citajKlijenta(&head);
                 }
                 else {
@@ -242,7 +244,7 @@ int main()
                             else {
                                 printf("%s se konektovao\n", ime);
                             }
-
+                            CloseHandle(hinboxKorisnika);
                         }
                         klijent = klijent->next;
                     }
