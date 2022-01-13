@@ -112,7 +112,7 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                      poruka1 = kreirajPoruku(poruka, klijent->ime);
 
                      dodajPorukuUListu(&poruka1, &(inbox)->poruke);
-                     printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
+                     //printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
                  }
                  else { // Ne Postoji klijent
                      PORUKA* poruka1 = kreirajPoruku(poruka, klijent->ime);
@@ -120,7 +120,7 @@ DWORD WINAPI PrikupljanjePoruka(LPVOID lpParam) {
                      klijent2->poruke = poruka1;
                      add_to_list(klijent2, &head);
                      brojKorisnika++;
-                     printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
+                     //printf("%s je poslao poruku klijentu %s: %s\n", klijent->ime, primalac, poruka);
                  }
              }
          }

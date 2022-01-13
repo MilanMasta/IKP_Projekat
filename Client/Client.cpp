@@ -80,6 +80,7 @@ int main()
         switch (izbor) {
         case 1:
             printf("\t\t\t\t\t\tOVO JE VAS INBOX: \n");
+            Sleep(20);
             iResult = send(connectSocket, zahtjev, (int)strlen(zahtjev), 0); // zahtjev za pregled porukas
             while (!_kbhit()) {
                 
@@ -107,6 +108,7 @@ int main()
                     }
                 }
             }
+            Sleep(20);
             iResult = send(connectSocket, "kraj", 4, 0);
             break;
 
@@ -124,6 +126,7 @@ int main()
                 strcat(dataBuffer, primalac);
                 a = atoi(dataBuffer);
                 
+                Sleep(20);
                     // Send message to server using connected socket
                     iResult = send(connectSocket, dataBuffer, (int)strlen(dataBuffer) + 24, 0);
 
